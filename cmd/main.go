@@ -54,7 +54,7 @@ func replaceEnvVariables(input string, secretMap map[string]string) (string, err
 
 func main() {
 	if os.Getenv("CONTAINER_OS") == "" {
-		log.Fatal("ERROR: CONTAINER_OS environment variable not set!")
+		log.Fatal("ERROR: CONTAINER_OS environment variable not set! [docker/podman]")
 	}
 
 	container_os := os.Getenv("CONTAINER_OS")
@@ -134,12 +134,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error getting local IP: %v", err)
 	}
-	serviceMap["PGHOST"] = localIP
-
-	// Set new environment variables
-	os.Setenv("PGUSER", serviceMap["PGUSER"])
-	os.Setenv("PGPASSWORD", serviceMap["PGPASSWORD"])
-	os.Setenv("PGDATABASE", pgDatabase)
+	serviceMap["LOCAL_IP"] = localIP
 
 	// Print the results (for demonstration)
 	imageTag, err := getImageTag(serviceMap["container_image_tag_param"])
