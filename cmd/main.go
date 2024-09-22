@@ -114,13 +114,6 @@ func main() {
 		log.Fatalf("ERROR: Invalid or unconfiguredpersistence value '%s'.", persistence)
 	}
 
-	// if not PGDATABASE, use PGUSER
-	pgDatabase, ok := serviceMap["PGDATABASE"]
-	if !ok {
-		fmt.Printf("WARNING: PGDATABASE not found in service map, using %s\n", serviceMap["PGUSER"])
-		pgDatabase = serviceMap["PGUSER"]
-	}
-
 	// if not container_service_name_prefix, use service
 	serviceNamePrefix, ok := serviceMap["container_service_name_prefix"]
 	if !ok {
