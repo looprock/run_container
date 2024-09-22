@@ -1,6 +1,7 @@
 builds:
-        - 
-            goos:
-                    - linux
-                    - windows
-                    - darwin
+  -
+    goos:
+      - linux
+      - windows
+      - darwin
+    dir: cmd
