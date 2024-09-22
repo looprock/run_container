@@ -4,4 +4,5 @@ builds:
       - linux
       - windows
       - darwin
-    dir: cmd
+    dir: .
+    main: ./cmd
