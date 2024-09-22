@@ -2,7 +2,6 @@ builds:
   -
     goos:
       - linux
-      - windows
       - darwin
     dir: .
     main: ./cmd
