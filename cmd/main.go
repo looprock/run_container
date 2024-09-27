@@ -59,23 +59,25 @@ func main() {
 
 	container_os := os.Getenv("CONTAINER_OS")
 	container_os_types := []string{"docker", "podman"}
-	valid, err := validateValue(container_os, container_os_types)
+	valid, _ := validateValue(container_os, container_os_types)
 	if !valid {
 		log.Fatalf("ERROR: Invalid CONTAINER_OS value '%s'. Must be one of %v!", container_os, container_os_types)
 	}
 
 	var env, service string
+	var dryRun bool
 
 	// Define flags
 	flag.StringVar(&env, "env", "", "Environment (dev/beta/prod/etc)")
 	flag.StringVar(&service, "service", "", "Name of service to run")
+	flag.BoolVar(&dryRun, "dry-run", false, "Print commands without executing them")
 
 	// Parse flags
 	flag.Parse()
 
 	// Verify arguments are set
 	if env == "" || service == "" {
-		fmt.Fprintf(os.Stderr, "USAGE: %s --env <env> --service <service>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "USAGE: %s --env <env> --service <service> [--dry-run]\n", os.Args[0])
 		os.Exit(1)
 	}
 
@@ -160,17 +162,25 @@ func main() {
 		container_cmd_string = fmt.Sprintf("%s %s", container_cmd_string, config)
 	}
 
-	pullImage(container_os, container_image)
-	stopContainer(container_os, serviceName)
-	// Split the command string into command and arguments
-	cmdParts := strings.Fields(container_cmd_string)
-	cmd := exec.Command(cmdParts[0], cmdParts[1:]...)
+	// Modify the execution part
+	if dryRun {
+		fmt.Println("Dry run mode. Commands to be executed:")
+		fmt.Printf("Pull image: %s pull %s\n", container_os, container_image)
+		fmt.Printf("Stop container: %s stop %s\n", container_os, serviceName)
+		fmt.Printf("Run container: %s\n", container_cmd_string)
+	} else {
+		pullImage(container_os, container_image)
+		stopContainer(container_os, serviceName)
+		// Split the command string into command and arguments
+		cmdParts := strings.Fields(container_cmd_string)
+		cmd := exec.Command(cmdParts[0], cmdParts[1:]...)
 
-	// Capture the command output
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatalf("Error executing command: %v\nOutput: %s", err, output)
+		// Capture the command output
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("Error executing command: %v\nOutput: %s", err, output)
+		}
+
+		fmt.Printf("Command executed successfully. Output:\n%s\n", output)
 	}
-
-	fmt.Printf("Command executed successfully. Output:\n%s\n", output)
 }
