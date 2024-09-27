@@ -66,14 +66,25 @@ func main() {
 
 	var env, service string
 	var dryRun bool
+	var listPorts bool
 
 	// Define flags
 	flag.StringVar(&env, "env", "", "Environment (dev/beta/prod/etc)")
 	flag.StringVar(&service, "service", "", "Name of service to run")
 	flag.BoolVar(&dryRun, "dry-run", false, "Print commands without executing them")
+	flag.BoolVar(&listPorts, "list-ports", false, "List all container map ports")
 
 	// Parse flags
 	flag.Parse()
+
+	if listPorts {
+		err := printContainerMapPorts()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 
 	// Verify arguments are set
 	if env == "" || service == "" {
@@ -92,7 +103,7 @@ func main() {
 	defaultsMap := combineMaps(defaultMap, serviceDefault)
 	serviceMap := combineMaps(defaultsMap, serviceEnv)
 
-	requiredEntries := []string{"container_image_tag_param", "container_base_image"}
+	requiredEntries := []string{"container_image_tag_param", "container_base_image", "container_service_port", "container_map_port"}
 	for _, entry := range requiredEntries {
 		if _, exists := serviceMap[entry]; !exists {
 			log.Fatalf("ERROR: Required entry '%s' not found in service secrets\n", entry)
@@ -138,6 +149,8 @@ func main() {
 	}
 	container_image := fmt.Sprintf("%s:%s", serviceMap["container_base_image"], imageTag)
 
+	container_ports := fmt.Sprintf("-p %s:%s", serviceMap["container_map_port"], serviceMap["container_service_port"])
+
 	// Create a string builder for environment variables
 	var envVars strings.Builder
 	for key, value := range serviceMap {
@@ -152,7 +165,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error replacing environment variables: %v", err)
 	}
-	container_cmd_string := fmt.Sprintf("%s run -d %s --name %s %s %s", container_os, container_persistence, serviceName, replacedEnvString, container_image)
+	container_cmd_string := fmt.Sprintf("%s run -d %s --name %s %s %s %s", container_os, container_persistence, serviceName, container_ports, replacedEnvString, container_image)
 
 	if command, exists := serviceMap["container_command"]; exists {
 		config, err := replaceEnvVariables(command, serviceMap)
