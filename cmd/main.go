@@ -155,7 +155,7 @@ func main() {
 	var envVars strings.Builder
 	for key, value := range serviceMap {
 		if !strings.HasPrefix(key, "container_") {
-			envVars.WriteString(fmt.Sprintf("-e %s=\"%s\" ", strings.ToUpper(key), value))
+			envVars.WriteString(fmt.Sprintf("-e %s=%s ", strings.ToUpper(key), value))
 		}
 	}
 	// Trim the trailing space

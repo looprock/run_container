@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -16,22 +15,29 @@ func getPodmanGateway() (string, error) {
 		return "", err
 	}
 
-	var networks []struct {
-		Subnets []struct {
-			Gateway string `json:"gateway"`
-		} `json:"subnets"`
+	// Convert byte slice to string
+	outputStr := string(output)
+
+	// Find the index of "gateway":
+	gatewayIndex := strings.Index(outputStr, `"gateway":`)
+	if gatewayIndex == -1 {
+		errMsg := fmt.Sprintf("gateway not found in network configuration")
+		log.Fatalf(errMsg)
 	}
 
-	err = json.Unmarshal(output, &networks)
-	if err != nil {
-		return "", err
+	// Find the next quote after "gateway":
+	startQuote := strings.Index(outputStr[gatewayIndex:], `"`) + gatewayIndex + 1
+	endQuote := strings.Index(outputStr[startQuote+1:], `"`) + startQuote + 1
+
+	if startQuote == -1 || endQuote == -1 || startQuote >= endQuote {
+		errMsg := fmt.Sprintf("unable to parse gateway IP")
+		log.Fatalf(errMsg)
 	}
 
-	if len(networks) > 0 && len(networks[0].Subnets) > 0 {
-		return strings.TrimSpace(networks[0].Subnets[0].Gateway), nil
-	}
+	// Extract the IP address
+	gatewayIP := outputStr[startQuote+1 : endQuote]
 
-	return "", nil
+	return strings.TrimSpace(gatewayIP), nil
 }
 
 func getLocalIP() (string, error) {
