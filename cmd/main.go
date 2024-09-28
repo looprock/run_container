@@ -135,13 +135,6 @@ func main() {
 	}
 	serviceName := fmt.Sprintf("%s-%s", serviceNamePrefix, env)
 
-	// get IP for communicating with host services, also use for PGHOST
-	localIP, err := getLocalIP()
-	if err != nil {
-		log.Fatalf("Error getting local IP: %v", err)
-	}
-	serviceMap["LOCAL_IP"] = localIP
-
 	// Print the results (for demonstration)
 	imageTag, err := getImageTag(serviceMap["container_image_tag_param"])
 	if err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"regexp"
@@ -27,22 +28,26 @@ func getPodmanGateway() (string, error) {
 	return strings.TrimSpace(gatewayIP), nil
 }
 
-func getLocalIP() (string, error) {
-	if os.Getenv("CONTAINER_OS") == "" {
-		log.Fatal("CONTAINER_OS environment variable not set")
-		return "", fmt.Errorf("CONTAINER_OS not set")
+func getLocalIP() ([]string, error) {
+	var ips []string
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get interface addresses: %v", err)
 	}
-	if os.Getenv("CONTAINER_OS") == "docker" {
-		return "host.docker.internal", nil
-	} else if os.Getenv("CONTAINER_OS") == "podman" {
-		gateway, err := getPodmanGateway()
-		if err != nil {
-			return "", err
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				ips = append(ips, ipnet.IP.String())
+			}
 		}
-		return gateway, nil
-	} else {
-		return "", fmt.Errorf("unsupported container OS: %s", os.Getenv("CONTAINER_OS"))
 	}
+
+	if len(ips) == 0 {
+		return nil, fmt.Errorf("no non-loopback IP address found")
+	}
+
+	return ips, nil
 }
 
 func pullImage(container_os string, imagePath string) {
