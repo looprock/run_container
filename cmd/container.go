@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -12,29 +13,17 @@ func getPodmanGateway() (string, error) {
 	cmd := exec.Command("podman", "network", "inspect", "podman")
 	output, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to inspect podman network: %v", err)
 	}
 
-	// Convert byte slice to string
-	outputStr := string(output)
-
-	// Find the index of "gateway":
-	gatewayIndex := strings.Index(outputStr, `"gateway":`)
-	if gatewayIndex == -1 {
-		log.Fatal("gateway not found in network configuration")
+	// Use regex to find the gateway IP
+	re := regexp.MustCompile(`"gateway":\s*"([^"]+)"`)
+	match := re.FindSubmatch(output)
+	if match == nil {
+		return "", fmt.Errorf("gateway IP not found in network configuration")
 	}
 
-	// Find the next quote after "gateway":
-	startQuote := strings.Index(outputStr[gatewayIndex:], `"`) + gatewayIndex + 1
-	endQuote := strings.Index(outputStr[startQuote+1:], `"`) + startQuote + 1
-
-	if startQuote == -1 || endQuote == -1 || startQuote >= endQuote {
-		log.Fatal("unable to parse gateway IP")
-	}
-
-	// Extract the IP address
-	gatewayIP := outputStr[startQuote+1 : endQuote]
-
+	gatewayIP := string(match[1])
 	return strings.TrimSpace(gatewayIP), nil
 }
 
