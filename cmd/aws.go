@@ -70,19 +70,24 @@ func returnSecrets(secretNames ...string) map[string]string {
 		}
 		result, err := svc.GetSecretValue(context.Background(), input)
 		if err != nil {
-			log.Fatalf("Error getting secret value for %s: %v\n", secretName, err)
+			log.Printf("WARNING: Error reading secret %s: %v", secretName, err)
+			continue // Skip this secret and continue with the next one
 		}
 
-		// Parse secret JSON
-		var tempMap map[string]string
-		err = json.Unmarshal([]byte(*result.SecretString), &tempMap)
-		if err != nil {
-			log.Fatalf("Error parsing secret JSON for %s: %v\n", secretName, err)
-		}
+		if result.SecretString != nil {
+			var tempMap map[string]string
+			err = json.Unmarshal([]byte(*result.SecretString), &tempMap)
+			if err != nil {
+				log.Printf("Error parsing secret JSON for %s: %v", secretName, err)
+				continue // Skip this secret and continue with the next one
+			}
 
-		// Merge tempMap into secretMap
-		for k, v := range tempMap {
-			secretMap[k] = v
+			// Merge tempMap into secretMap
+			for k, v := range tempMap {
+				secretMap[k] = v
+			}
+		} else {
+			log.Printf("WARNING: No secret string returned for %s", secretName)
 		}
 	}
 
