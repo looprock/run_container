@@ -21,8 +21,7 @@ func getPodmanGateway() (string, error) {
 	// Find the index of "gateway":
 	gatewayIndex := strings.Index(outputStr, `"gateway":`)
 	if gatewayIndex == -1 {
-		errMsg := fmt.Sprintf("gateway not found in network configuration")
-		log.Fatalf(errMsg)
+		log.Fatal("gateway not found in network configuration")
 	}
 
 	// Find the next quote after "gateway":
@@ -30,8 +29,7 @@ func getPodmanGateway() (string, error) {
 	endQuote := strings.Index(outputStr[startQuote+1:], `"`) + startQuote + 1
 
 	if startQuote == -1 || endQuote == -1 || startQuote >= endQuote {
-		errMsg := fmt.Sprintf("unable to parse gateway IP")
-		log.Fatalf(errMsg)
+		log.Fatal("unable to parse gateway IP")
 	}
 
 	// Extract the IP address
