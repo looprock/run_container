@@ -5,4 +5,6 @@
 - registry for auto-allocation of ports to map to localhost
 - instead of docker service names, can use env.LOCAL_IP:port.service
 - Only requirement for service persistence
+- allow for empty-missing defaults
+- move SSM param into secret
 - self-update?
